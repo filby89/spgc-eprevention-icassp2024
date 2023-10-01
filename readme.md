@@ -1,8 +1,8 @@
 ## SPGC ICASSP 2024 Baselines
 
 <div align="center">
-<img src="https://pbs.twimg.com/profile_images/1676933933705883649/UfthOBZV_400x400.jpg" width="11%" align="left">
-<img src="assets/logo.jpg" width="89%">
+<img src="https://pbs.twimg.com/profile_images/1676933933705883649/UfthOBZV_400x400.jpg" width="10%" align="left">
+<img src="assets/logo.jpg" width="80%">
 </div>
 <br/>
 
