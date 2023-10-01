@@ -105,23 +105,24 @@ def main():
     all_features_train = torch.vstack(all_features_train).numpy()
     all_labels_train = torch.hstack(all_labels_train).numpy()
 
-    # ----- train the one class svms of this epoch ----- #
-    print('Training OneClassSVMs...')
-    svms = []
+    # ----- train the outlier detection of this epoch ----- #
+    print('Training Robust Covariance...')
+    clfs = []
 
     from sklearn.covariance import EllipticEnvelope
-    # -------- train one class svm to predict scores from classification features -------- # 
+    # -------- train elliptic envelopes to predict scores from classification features -------- # 
     for subject in range(args.num_patients):
         subject_features_train = all_features_train[all_labels_train==subject]
 
         clf = EllipticEnvelope(support_fraction=1).fit(subject_features_train)
-        svms.append(clf)
+        # clf = OneClassSVM().fit(subject_features_train)
+        clfs.append(clf)
 
     all_auroc = []
     all_auprc = []
 
-    ideal_auroc = []
-    ideal_auprc = []
+    random_auroc = []
+    random_auprc = []
 
     for patient in os.listdir(args.features_path):
         patient_dir = os.path.join(args.features_path, patient)
@@ -143,8 +144,9 @@ def main():
                 # IMPORTANT - drop last row as it was falsely added
                 relapse_df = relapse_df.iloc[:-1]
 
-                # count 0 and 1 
-                relapse_shapes += relapse_df['relapse'].sum()
+                # count 0 and 1 to calculate random chance
+                if args.mode != 'test':
+                    relapse_shapes += relapse_df['relapse'].sum()
 
                 day_indices = relapse_df['day_index'].unique() # get all day indices for this patient
 
@@ -184,11 +186,11 @@ def main():
                     logits, features = model(sequence_tensor.to(device))
 
 
-                    current_user_svm = svms[patient_id]
+                    current_user_clf = clfs[patient_id]
                     features = features.detach().cpu().numpy()
 
 
-                    anomaly_score = -current_user_svm.decision_function(features)
+                    anomaly_score = -current_user_clf.decision_function(features)
 
                     anomaly_score = anomaly_score.mean()
 
@@ -200,44 +202,49 @@ def main():
 
                 # save subfolder in submission_path
                 os.makedirs(os.path.join(args.submission_path, patient, subfolder), exist_ok=True)
-                relapse_df.to_csv(os.path.join(args.submission_path, patient, subfolder, 'relapses.csv'))
+                relapse_df.to_csv(os.path.join(args.submission_path, patient, subfolder, 'submission.csv'))
 
         user_anomaly_scores = np.array(user_anomaly_scores)
         user_relapse_labels = np.array(user_relapse_labels)
 
-        # create df
-        user_df = pd.DataFrame()
-        user_df['anomaly_score'] = user_anomaly_scores
-        user_df['relapse'] = user_relapse_labels
-        # sort by anomaly score
-        user_df = user_df.sort_values(by=['anomaly_score'], ascending=False)
-        user_df.to_csv("{}.csv".format(patient), index=False)
+        # if mode is not test, calculate scores
+        if args.mode != 'test':
 
-        # Compute ROC Curve
-        precision, recall, _ = sklearn.metrics.precision_recall_curve(user_relapse_labels, user_anomaly_scores)
+            # create df per user if you want to see per user anomaly scores/relapses
+            # user_df = pd.DataFrame()
+            # user_df['anomaly_score'] = user_anomaly_scores
+            # user_df['relapse'] = user_relapse_labels
+            # # sort by anomaly score
+            # user_df = user_df.sort_values(by=['anomaly_score'], ascending=False)
+            # user_df.to_csv("{}.csv".format(patient), index=False)
 
-        fpr, tpr, _ = sklearn.metrics.roc_curve(user_relapse_labels, user_anomaly_scores)
+            # Compute ROC Curve
+            precision, recall, _ = sklearn.metrics.precision_recall_curve(user_relapse_labels, user_anomaly_scores)
 
-        # # Compute AUROC
-        auroc = sklearn.metrics.auc(fpr, tpr)
+            fpr, tpr, _ = sklearn.metrics.roc_curve(user_relapse_labels, user_anomaly_scores)
 
-        # # Compute AUPRC
-        auprc = sklearn.metrics.auc(recall, precision)
+            # # Compute AUROC
+            auroc = sklearn.metrics.auc(fpr, tpr)
 
-        ideal_auroc.append(0.5)
+            # # Compute AUPRC
+            auprc = sklearn.metrics.auc(recall, precision)
 
-        ideal_auprc.append(user_relapse_labels.mean())
-        all_auroc.append(auroc)
-        all_auprc.append(auprc)
-        # auprc = pr_auc_score(user_relapse_labels, user_anomaly_scores)
-        print(f'USER: {patient}, AUROC: {auroc:.4f}, AUPRC: {auprc:.4f}, Relapse rate: {user_relapse_labels.mean():.4f}')
+            random_auroc.append(0.5)
 
-    total_auroc = sum(all_auroc)/len(all_auroc)
-    total_auprc = sum(all_auprc)/len(all_auprc)
-    ideal_auroc = sum(ideal_auroc)/len(ideal_auroc)
-    ideal_auprc = sum(ideal_auprc)/len(ideal_auprc)
-    total_avg = (total_auroc + total_auprc) / 2
-    print(f'Total AUROC: {total_auroc:.4f}, Total AUPRC: {total_auprc:.4f}, Total AVG: {total_avg:.4f}, Ideal AUROC: {ideal_auroc:.4f}, Ideal AUPRC: {ideal_auprc:.4f}')
+            random_auprc.append(user_relapse_labels.mean())
+            all_auroc.append(auroc)
+            all_auprc.append(auprc)
+            # auprc = pr_auc_score(user_relapse_labels, user_anomaly_scores)
+            print(f'USER: {patient}, AUROC: {auroc:.4f}, AUPRC: {auprc:.4f}, Random AUPRC: {user_relapse_labels.mean():.4f}')
+
+    if args.mode != 'test':
+
+        total_auroc = sum(all_auroc)/len(all_auroc)
+        total_auprc = sum(all_auprc)/len(all_auprc)
+        random_auroc = sum(random_auroc)/len(random_auroc)
+        random_auprc = sum(random_auprc)/len(random_auprc)
+        total_avg = (total_auroc + total_auprc) / 2
+        print(f'Total AUROC: {total_auroc:.4f}, Total AUPRC: {total_auprc:.4f}, Random AVG: {total_avg:.4f}, Random AUROC: {random_auroc:.4f}, Random AUPRC: {random_auprc:.4f}, Ideal AVG: {(random_auroc + random_auprc)/2:.4f}')
 
 
 

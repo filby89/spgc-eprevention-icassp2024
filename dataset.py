@@ -22,6 +22,8 @@ class PatientDataset(Dataset):
 
 
         for patient in sorted(os.listdir(features_path)):
+            if "P9" in patient or "old" in patient:
+                continue
             all_data = pd.DataFrame()
             patient_dir = os.path.join(features_path, patient)
 

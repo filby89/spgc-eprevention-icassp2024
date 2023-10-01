@@ -102,6 +102,9 @@ Notes:
 2. Participants are allowed to send multiple submissions (up to 5), however from each team we will evaluate only the last two sent.
 3. Each submission must be accompanied with a short (up to 1 page) description of the proposed system and methodology.
 4. Participants are allowed to use validation data and relapse annotations only for evaluating their solutions and not for training their models. We will only accept unsupervised methods (regarding the relapse annotations) for the challenge.
+5. Participants are encouraged to use the provided baselines as a starting point for their solutions. In addition, participants can open issues in this repository for any questions regarding the challenge/source code.
+6. IMPORTANT! The relapses.csv falsely contains one extra day at the bottom of the file. This is a mistake - participants should not predict the final day in test datasets. Please ignore this extra day.
+
 
 #### Submission
 We expect the participants to send us multiple .csv files with the following format:
@@ -165,7 +168,7 @@ First we extract the following features from the raw data using a 5-mins window:
 * RR-Interval Lomb-Scargle Power in High Frequency Band
 * Accelerometer norm
 
-and also add time encoding of the corresponding time of the day using cosine and sine functions. Then we train a Transformer Encoder on these features that learns to classify the identity of the user from a window of 24 samples. We consider each day in the dataset independently (no temporal modeling across multiple days).
+and also add time encoding of the corresponding time of the day using cosine and sine functions. Then we train a Transformer Encoder on these features that learns to classify the identity of the user from a window of 24 (48 for psychotic track) samples (see efthymioudigital,retsinas2020person citations at the end for the concept behind this). We consider each day in the dataset independently (no temporal modeling across multiple days).
 
 In order to perform the relapse detection task in an unsupervised way (anomaly detection), we extract features from the training set using the penultimate layer of the trained Transformer Encoder and train an [Elliptic Envelope](https://scikit-learn.org/stable/modules/generated/sklearn.covariance.EllipticEnvelope.html)  outlier detector on these features. 
 
@@ -178,7 +181,12 @@ The following Table shows the baseline scores for Track 1:
 | Random Chance | 0.326 | 0.500 | 0.413 |
 | Baseline | 0.472 | 0.614 | 0.543 |
 
-The corresponding Table for Track 2 will be released soon.
+and for Track 2:
+
+| Track 2 | PR-AUC | ROC-AUC | AVG |
+|---------|--------|---------|-----|
+| Random Chance | 0.349 | 0.500 | 0.424 |
+| Baseline | 0.452 | 0.594 | 0.522 |
 
 
 
@@ -226,7 +234,7 @@ python train.py --num_patients 9 --window_size 24 --save_path track1_win24_l2_d3
 and for track 2 run:
 
 ```bash
-python train.py --num_patients 9 --window_size 24 --save_path track1_win24_l2_d32 --features_path data/track1_features/ --dataset_path data/track1/ --d_model 32 --nlayers 2
+python train.py --num_patients 8 --window_size 48 --save_path track2_win48_l2_d32 --features_path data/track2_features/ --dataset_path data/track2/ --d_model 32 --nlayers 2
 ```
 
 During training the model also at each epoch trains the OneClassSVMs and outputs metrics for the validation set. Note that the validation metrics here do not correspond to the official metrics of the challenge (because we ignore days with limited/missing data), but are used only for finding the best model which will be used subsequently for testing and creating the submission.
@@ -241,8 +249,10 @@ python test.py --num_patients 9 --window_size 24 --features_path data/track1_fea
 you can also use the validation set in order to calculate the official performance of the model (taking into account all days):
 
 ```bash
-python test.py --num_patients 9 --window_size 24 --features_path data/track1_features --dataset_path data/track1 --load_path track1_win24_l2_d32/best_model.pth --scaler_path track1_win24_l2_d32/scaler.pkl  --submission_path track1_subm --mode val
+python test.py --num_patients 9 --window_size 24 --features_path data/track1_features --dataset_path data/track2 --load_path track1_win24_l2_d32/best_model.pth --scaler_path track1_win24_l2_d32/scaler.pkl  --submission_path track1_subm --mode val
 ```
+
+and similarly for track2.
 
 ### References
 

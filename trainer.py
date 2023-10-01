@@ -107,12 +107,12 @@ class Trainer:
             all_features_train = torch.vstack(all_features_train).numpy()
             all_labels_train = torch.hstack(all_labels_train).numpy()
 
-            # ----- train the one class svms of this epoch ----- #
-            print('Training OneClassSVMs...')
+            # ----- train the elliptic envelopes of this epoch ----- #
+            print('Training Robust Covariance...')
             clfs = []
 
 
-            # -------- train one class svm to predict scores from classification features -------- # 
+            # -------- train elliptic envelope to predict scores from classification features -------- # 
             for subject in range(self.args.num_patients):
                 subject_features_train = all_features_train[all_labels_train==subject]
 
