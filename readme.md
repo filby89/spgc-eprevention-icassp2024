@@ -9,12 +9,19 @@
 This repository holds the source code for the baselines of the `The 2nd e-Prevention challenge: Psychotic and Non-Psychotic Relapse Detection using Wearable-Based Digital Phenotyping` organized in context of [ICASSP 2024](https://2024.ieeeicassp.org/). The Challenge website can be found in [https://robotics.ntua.gr/icassp2024-eprevention-spgc/](https://robotics.ntua.gr/icassp2024-eprevention-spgc/).
 
 
+### Registration
+To register for the challenge and get access to the challenge data participants are required to send an e-mail to the below contacts with the team name, the names of their team members, as well as their emails and affiliations.
+
+- **P. P. Filntisis**, School of ECE (CVSP / IRAL Group), National Technical Univ. of Athens, [filby@central.ntua.gr](mailto:filby@central.ntua.gr)
+
+- **N. Efthymiou**, School of ECE (CVSP / IRAL Group), National Technical Univ. of Athens, [nefthymiou@central.ntua.gr](mailto:nefthymiou@central.ntua.gr)
 
 ### Tracks
 Participants will be evaluated on their ability to use this data to extract digital phenotypes that can effectively quantify behavioral patterns and traits. This will be assessed across two distinct tasks: 
 
 1. Unsupervised Detection of non-psychotic relapses
 2. Unsupervised Detection of psychotic relapses
+
 
 
 ### Dataset Description
@@ -42,6 +49,7 @@ The dataset for each track has the following format:
 
 For each patient and split we provide multiple sequences of several contiguous days of raw data from the accelerometer, gyroscope, heart rate monitor, sleeping information, and walking information. We use the apache parquet format for storing the raw data. Each .parquet file includes a dataframe with the following format:
 
+
 | measurement#1 | measurement#2 | time            | day_index |
 |-----------|------------|-----------------|-----------|
 | 81        | 721        | 00:00:00.050896 | 0         |
@@ -50,7 +58,8 @@ For each patient and split we provide multiple sequences of several contiguous d
 | 48        | 300        | 00:00:00.651574 | 1         |
 | 32        | 50        | 00:00:00.853641 | 2         |
 
-where `measurement#1`, `measurement#2`, ..., `measurement#N` are measurement extracted from the corresponding sensor, `time` is the time of the day, and `day_index` is the day index of the measurement. Each different folder (e.g., train_0, train_1, val_0, val_1, etc.) include a large contiguous temporal segment of many days of data. 
+
+where `measurement#1`, `measurement#2`, ..., `measurement#N` are measurements extracted from the corresponding sensor, `time` is the time of the day, and `day_index` is the day index of the measurement. Each different folder (e.g., train_0, train_1, val_0, val_1, etc.) include a large contiguous temporal segment of many days of data. 
 
 Specifically for the `steps.parquet` we have the following format:
 
@@ -76,7 +85,7 @@ where each row denotes a segment (one day can have multiple segments) during whi
 
 The `relapses.csv` file includes the relapse information for the corresponding patient and split. The format of the `relapses.csv` file is the following:
 
-| relapse? | day_index |
+| relapse | day_index |
 |-------------------|-----------|
 | 0                 | 0         |
 | 1                 | 1         |
@@ -85,7 +94,7 @@ The `relapses.csv` file includes the relapse information for the corresponding p
 | 0                 | 4         |
 | ...               | ...       |
 
-where `relapse?` is a binary variable indicating whether the patient is on a relapse state on the corresponding day and `day_index` is the day index of the measurement. 
+where `relapse` is a binary variable indicating whether the patient is on a relapse state on the corresponding day and `day_index` is the day index of the measurement. 
 
 Notes:
 
@@ -124,23 +133,27 @@ in the following directory structure:
 #### Metrics
 For both tracks, the evaluation of the state of the patient as stable or relapsing will be carried out on a daily basis. Since this is an anomaly detection task, the average of the PR-AUC and ROC-AUC scores over the daily predictions will be utilized as the final evaluation metrics. Participants can evaluate the effectiveness of their approach using the same metrics on the validation set. 
 
-This repository holds the code needed to evaluate the solution. Note that the PR-AUC, ROC-AUC scores will be macro-averaged. This means that we will first calculate the PR-AUC, ROC-AUC scores for each patient and then average them. The formula is:
+This repository holds the code needed to evaluate the solution. Note that the PR-AUC, ROC-AUC scores will be macro-averaged. This means that we will first calculate the PR-AUC, ROC-AUC scores for each patient, get the mean across all patients, and finally average the two values. The formula is:
 
-```
-PR-AUC = 1 / N * sum_{i=1}^N PR-AUC_i
-ROC-AUC = 1 / N * sum_{i=1}^N ROC-AUC_i
-AVG = (PR-AUC + ROC-AUC) / 2
-```
+$$
+\begin{equation}
+pr_{auc} = \frac{1}{N} \sum_{i=1}^{N} pr_{auc}^i
+\end{equation}
+$$
+$$
+\begin{equation}
+roc_{auc} = \frac{1}{N} \sum_{i=1}^{N} roc_{auc}^i
+\end{equation}
+$$
+$$
+\begin{equation}
+avg = \frac{pr_{auc} + roc_{auc}}{2}
+\end{equation}
+$$
 
 where `N` is the number of patients in the dataset.
 
 
-### Usage
-To register for the challenge, participants are required to send an e-mail to the below contacts with the team name, the names of their team members, as well as their emails and affiliations.
-
-- **P. P. Filntisis**, School of ECE (CVSP / IRAL Group), National Technical Univ. of Athens, [filby@central.ntua.gr](mailto:filby@central.ntua.gr)
-
-- **N. Efthymiou**, School of ECE (CVSP / IRAL Group), National Technical Univ. of Athens, [nefthymiou@central.ntua.gr](mailto:nefthymiou@central.ntua.gr)
 
 ### Baseline Description
 First we extract the following features from the raw data using a 5-mins window:
@@ -152,11 +165,21 @@ First we extract the following features from the raw data using a 5-mins window:
 * RR-Interval Lomb-Scargle Power in High Frequency Band
 * Accelerometer norm
 
-and also add time encoding of the corresponding time of the day using cosine and sine functions. Then we train a Transformer Encoder on these features that learns to classify the identity of the user from a window of 32 samples. We consider each day in the dataset independently (no temporal modeling across multiple days).
+and also add time encoding of the corresponding time of the day using cosine and sine functions. Then we train a Transformer Encoder on these features that learns to classify the identity of the user from a window of 24 samples. We consider each day in the dataset independently (no temporal modeling across multiple days).
 
-In order to perform the relapse detection task in an unsupervised way (anomaly detection) we then extract features from the training set using the penultimate layer of the trained Transformer Encoder and train a one-class SVM on these features. 
+In order to perform the relapse detection task in an unsupervised way (anomaly detection), we extract features from the training set using the penultimate layer of the trained Transformer Encoder and train an [Elliptic Envelope](https://scikit-learn.org/stable/modules/generated/sklearn.covariance.EllipticEnvelope.html)  outlier detector on these features. 
 
-At validation/test time the trained SVM is used to score features extracted from multiple windows for each day in the val/test dataset, the scores are averaged per day and then the average score is used to classify the day as relapse or not.
+At validation/test time the trained SVM is used to score features extracted from multiple windows for each day in the val/test dataset, the scores are averaged per day and then the average score is used as an anomaly score.
+
+The following Table shows the baseline scores for Track 1:
+
+| Track 1 | PR-AUC | ROC-AUC | AVG |
+|---------|--------|---------|-----|
+| Random Chance | 0.326 | 0.500 | 0.413 |
+| Baseline | 0.472 | 0.614 | 0.543 |
+
+The corresponding Table for Track 2 will be released soon.
+
 
 
 ### Running the baselines
@@ -173,6 +196,10 @@ next, install the requirements:
 ```bash
 pip install -r requirements.txt
 ```
+
+### Data
+Download the raw data (you need to register) and extract them inside the `data` folder. The folder structure should be the following:
+
 
 
 #### Feature extraction
@@ -193,13 +220,13 @@ python extract_features.py --dataset_path data/track2/ --out_features_path data/
 To train the Transformer Encoder classifier for track1 run the following command:
 
 ```bash
-python train.py --num_patients 9 --window_size 24 --save_path track1_win24_l2_d64 --features_path data/track1_features/ --dataset_path data/track1/ --d_model 64 --nlayers 2
+python train.py --num_patients 9 --window_size 24 --save_path track1_win24_l2_d32 --features_path data/track1_features/ --dataset_path data/track1/ --d_model 32 --nlayers 2
 ```
 
 and for track 2 run:
 
 ```bash
-python train.py --optimizer Adam --learning_rate 1e-3 --window_size 32 --num_patients 10 --save_path checkpoints_track2
+python train.py --num_patients 9 --window_size 24 --save_path track1_win24_l2_d32 --features_path data/track1_features/ --dataset_path data/track1/ --d_model 32 --nlayers 2
 ```
 
 During training the model also at each epoch trains the OneClassSVMs and outputs metrics for the validation set. Note that the validation metrics here do not correspond to the official metrics of the challenge (because we ignore days with limited/missing data), but are used only for finding the best model which will be used subsequently for testing and creating the submission.
@@ -208,16 +235,17 @@ During training the model also at each epoch trains the OneClassSVMs and outputs
 To find the anomalies for track1 and create a submission file run the following command:
 
 ```bash
-python test.py 
+python test.py --num_patients 9 --window_size 24 --features_path data/track1_features --dataset_path data/track1 --load_path track1_win24_l2_d32/best_model.pth --scaler_path track1_win24_l2_d32/scaler.pkl  --submission_path track1_subm --mode test
 ```
 
 you can also use the validation set in order to calculate the official performance of the model (taking into account all days):
 
 ```bash
-
+python test.py --num_patients 9 --window_size 24 --features_path data/track1_features --dataset_path data/track1 --load_path track1_win24_l2_d32/best_model.pth --scaler_path track1_win24_l2_d32/scaler.pkl  --submission_path track1_subm --mode val
 ```
 
 ### References
+
 
 ```
 @article{zlatintsi2022prevention,
@@ -256,7 +284,7 @@ you can also use the validation set in order to calculate the official performan
 
 Participating teams are allowed to compete in any or both tracks; however, all participants should not be included in more than one team. Αfter the completion of the challenge, the top-scoring teams for each track will be declared the winners of their respective track. Furthermore, the top-5 performing teams will be required to provide a synopsis of their proposed methodology and results in a two-page paper and present it in person to the Special Session dedicated to this challenge at the ICASSP-2024 conference.
 
-Permission is granted to use the data, given that you agree: 1. To include a reference to the e-Prevention Dataset in any work that makes use of the dataset. For research papers, cite our preferred publication as it will be listed on our website and our challenge overview paper (to be released later); for other media, cite our preferred publication as it will be listed on our website. 2. That you do not distribute this dataset or modified versions. 3. That you may not use the dataset or any derivative work for commercial purposes, such as, for example, licensing or selling the data or using the data with the purpose of procuring a commercial gain. 4. That all rights not expressly granted to you are reserved by the e-Prevention SP Grand Challenge 2024 organizers.
+Permission is granted to use the data, given that you agree: 1. To include a reference to the e-Prevention Dataset in any work that makes use of the dataset. For research papers, cite our preferred publication as it will be listed on our website and our challenge overview paper (to be released later). 2. That you do not distribute this dataset or modified versions. 3. That you may not use the dataset or any derivative work for commercial purposes, such as, for example, licensing or selling the data or using the data with the purpose of procuring a commercial gain. 4. That all rights not expressly granted to you are reserved by the e-Prevention SP Grand Challenge 2024 organizers.
 
 
 ### Organizing Team
