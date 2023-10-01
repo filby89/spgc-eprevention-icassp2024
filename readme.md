@@ -1,10 +1,12 @@
 ## SPGC ICASSP 2024 Baselines
 
 <div align="center">
-<img src="assets/logo.png">
+<img src="https://pbs.twimg.com/profile_images/1676933933705883649/UfthOBZV_400x400.jpg" width="11%" align="left">
+<img src="assets/logo.jpg" width="89%">
 </div>
+<br/>
 
-This repository holds the source code for the baselines of the `The 2nd e-Prevention challenge: Psychotic and Non-Psychotic Relapse Detection using Wearable-Based Digital Phenotyping`. The Challenge website can be found in [https://robotics.ntua.gr/icassp2024-eprevention-spgc/](https://robotics.ntua.gr/icassp2024-eprevention-spgc/).
+This repository holds the source code for the baselines of the `The 2nd e-Prevention challenge: Psychotic and Non-Psychotic Relapse Detection using Wearable-Based Digital Phenotyping` organized in context of [ICASSP 2024](https://2024.ieeeicassp.org/). The Challenge website can be found in [https://robotics.ntua.gr/icassp2024-eprevention-spgc/](https://robotics.ntua.gr/icassp2024-eprevention-spgc/).
 
 
 
