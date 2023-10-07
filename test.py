@@ -141,7 +141,7 @@ def main():
                 df = df.dropna()
             
                 relapse_df = pd.read_csv(os.path.join(args.dataset_path, patient, subfolder, 'relapses.csv'))
-                # IMPORTANT - drop last row as it was falsely added
+                # IMPORTANT - drop last row as it was falsely added by the organizers
                 relapse_df = relapse_df.iloc[:-1]
 
                 # count 0 and 1 to calculate random chance

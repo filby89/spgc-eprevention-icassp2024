@@ -98,12 +98,14 @@ where `relapse` is a binary variable indicating whether the patient is on a rela
 
 Notes:
 
-1. There is the possibility that for some days we did not have any data (e.g., the day_index in the corresponding dataframe is missing). In this case, the participants must also predict the relapse state of the patient for this day and include it in their submission.
-2. Participants are allowed to send multiple submissions (up to 5), however from each team we will evaluate only the last two sent.
-3. Each submission must be accompanied with a short (up to 1 page) description of the proposed system and methodology.
-4. Participants are allowed to use validation data and relapse annotations only for evaluating their solutions and not for training their models. We will only accept unsupervised methods (regarding the relapse annotations) for the challenge.
-5. Participants are encouraged to use the provided baselines as a starting point for their solutions. In addition, participants can open issues in this repository for any questions regarding the challenge/source code.
-6. IMPORTANT! The relapses.csv falsely contains one extra day at the bottom of the file. This is a mistake - participants should not predict the final day in test datasets. Please ignore this extra day.
+
+1. Keep in mind that **the training set does not contain any relapses** (since this is an unsupervised task). As a result, participants should use the training set to build their models, and use the annotated relapses in the validation set in order to evaluate their solutions. The test set will be used for the final evaluation of the challenge. 
+2. Participants are allowed to use validation data and relapse annotations only for evaluating their solutions and not for training their models. We will only accept unsupervised methods (regarding the relapse annotations) for the challenge.
+3. There is the possibility that for some days we did not have any data (e.g., the day_index in the corresponding dataframe is missing). In this case, the participants must also predict the relapse state of the patient for this day and include it in their submission.
+4. Participants are allowed to send multiple submissions (up to 5), however from each team we will evaluate only the last two sent.
+5. Each submission must be accompanied with a short (up to 1 page) description of the proposed system and methodology.
+6. Participants are encouraged to use the provided baselines as a starting point for their solutions. In addition, participants can open issues in this repository for any questions regarding the challenge/source code.
+7. IMPORTANT! The relapses.csv falsely contains one extra day at the bottom of the file. This is a mistake - participants should not predict the final day in test datasets. Please ignore this extra day. The script `test.py` also showcases this change.
 
 
 #### Submission
@@ -170,18 +172,18 @@ First we extract the following features from the raw data using a 5-mins window:
 
 and also add time encoding of the corresponding time of the day using cosine and sine functions. Then we train a Transformer Encoder on these features that learns to classify the identity of the user from a window of 24 (48 for psychotic track) samples (see efthymioudigital,retsinas2020person citations at the end for the concept behind this). We consider each day in the dataset independently (no temporal modeling across multiple days).
 
-In order to perform the relapse detection task in an unsupervised way (anomaly detection), we extract features from the training set using the penultimate layer of the trained Transformer Encoder and train an [Elliptic Envelope](https://scikit-learn.org/stable/modules/generated/sklearn.covariance.EllipticEnvelope.html)  outlier detector on these features. 
+In order to perform the relapse detection task in an unsupervised way (anomaly detection), we extract features from the training set using the penultimate layer of the trained Transformer Encoder and train an [Elliptic Envelope](https://scikit-learn.org/stable/modules/generated/sklearn.covariance.EllipticEnvelope.html) outlier detector on these features. 
 
-At validation/test time the trained SVM is used to score features extracted from multiple windows for each day in the val/test dataset, the scores are averaged per day and then the average score is used as an anomaly score.
+At validation/test time the outlier detector is used to score features extracted from multiple windows for each day in the val/test dataset, the scores are averaged per day and then the average score is used as an anomaly score.
 
-The following Table shows the baseline scores for Track 1:
+The following Table shows the baseline scores for Track 1 (validation set):
 
 | Track 1 | PR-AUC | ROC-AUC | AVG |
 |---------|--------|---------|-----|
 | Random Chance | 0.326 | 0.500 | 0.413 |
 | Baseline | 0.472 | 0.614 | 0.543 |
 
-and for Track 2:
+and for Track 2 (validation set):
 
 | Track 2 | PR-AUC | ROC-AUC | AVG |
 |---------|--------|---------|-----|
@@ -309,3 +311,5 @@ P. P. Filntisis<sup>1</sup>, N. Efthymiou<sup>1</sup>, G. Retsinas<sup>1</sup>, 
 Funding: This research has been financed by the European Regional Development Fund of the European Union and Greek national funds through the Operational Program Competitiveness, Entrepreneurship and Innovation, under the call RESEARCH–CREATE–INNOVATE (project acronym: e-Prevention, code: T1EDK-02890/MIS: 5032797).
 
 This repository has borrowed code from the winning solution of the second track of the 1st e-Prevention Challenge which can be found [here](https://github.com/perceivelab/e-prevention-icassp-2023).
+
+Link to previous challenge: [https://robotics.ntua.gr/eprevention-sp-challenge/](https://robotics.ntua.gr/eprevention-sp-challenge/)
