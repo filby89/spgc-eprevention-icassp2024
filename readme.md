@@ -19,8 +19,8 @@ To register for the challenge and get access to the challenge data participants 
 ### Tracks
 Participants will be evaluated on their ability to use this data to extract digital phenotypes that can effectively quantify behavioral patterns and traits. This will be assessed across two distinct tasks: 
 
-1. Unsupervised Detection of non-psychotic relapses
-2. Unsupervised Detection of psychotic relapses
+1. Unsupervised Detection of non-psychotic relapses (i.e., relapses which do not exhibit psychotic symptoms such as hallucinations. One example are depressive relapses).
+2. Unsupervised Detection of psychotic relapses (e.g., relapses where psychotic symptoms are present).
 
 
 
