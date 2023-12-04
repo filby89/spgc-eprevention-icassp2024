@@ -244,7 +244,7 @@ def main():
         random_auroc = sum(random_auroc)/len(random_auroc)
         random_auprc = sum(random_auprc)/len(random_auprc)
         total_avg = (total_auroc + total_auprc) / 2
-        print(f'Total AUROC: {total_auroc:.4f}, Total AUPRC: {total_auprc:.4f}, Random AVG: {total_avg:.4f}, Random AUROC: {random_auroc:.4f}, Random AUPRC: {random_auprc:.4f}, Ideal AVG: {(random_auroc + random_auprc)/2:.4f}')
+        print(f'Total AUROC: {total_auroc:.4f}, Total AUPRC: {total_auprc:.4f}, Total AVG: {total_avg:.4f}, Random AUROC: {random_auroc:.4f}, Random AUPRC: {random_auprc:.4f}, Ideal AVG: {(random_auroc + random_auprc)/2:.4f}')
 
 
 
